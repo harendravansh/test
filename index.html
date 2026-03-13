@@ -924,13 +924,7 @@ margin-right:6px;
                     <p><strong>Remember:</strong> TRM is task-specific and dynamic. As ${assessmentData.employeeName} gains experience and confidence with this task, their TRM level will increase, and you should adjust your management style accordingly. Reassess regularly and celebrate progress!</p>
                 </div>
 
-                <div class="button-group">
-                    <button class="btn-success" id="saveToSheetsBtn" onclick="sendToGoogleSheets(${JSON.stringify(assessmentResults).replace(/"/g, '&quot;')})">
-                        💾 Save to Google Sheets
-                    </button>
-                    <button class="btn-secondary" onclick="window.print()">🖨️ Print / Save PDF</button>
-                    <button class="btn-secondary" onclick="location.reload()">🔄 New Assessment</button>
-                </div>
+                
             `;
             
             // Hide sections and show results
