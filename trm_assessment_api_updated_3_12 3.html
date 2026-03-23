@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRM Assessment Tool - Lineal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; font-weight: 700; }
+        .header h1 i { margin-right: 12px; }
+        .header p { font-size: 1.1em; opacity: 0.95; }
+        .content { padding: 40px; }
+        .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; margin-bottom: 30px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: 0%; transition: width 0.3s ease; }
+        .section { display: none; animation: fadeIn 0.5s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; font-weight: 600; color: #333; margin-bottom: 10px; font-size: 1.05em; }
+        .form-group input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border-color 0.3s ease; }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        .task-categories { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
+        .task-card { border: 2px solid #e0e0e0; border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s ease; text-align: center; }
+        .task-card:hover { border-color: #667eea; transform: translateY(-3px); box-shadow: 0 4px 12px rgba(102,126,234,0.2); }
+        .task-card.selected { border-color: #667eea; background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%); }
+        .task-card .icon { font-size: 2em; margin-bottom: 10px; color: #667eea; }
+        .task-card .title { font-weight: 600; color: #333; margin-bottom: 5px; }
+        .task-card .subtitle { font-size: 0.85em; color: #666; }
+        .question-card { background: #f8f9fa; border-radius: 12px; padding: 25px; margin-bottom: 20px; }
+        .question-card h3 { color: #333; margin-bottom: 15px; font-size: 1.1em; }
+        .radio-group { display: flex; flex-direction: column; gap: 12px; }
+        .radio-option { display: flex; align-items: center; padding: 15px; background: white; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
+        .radio-option:hover { border-color: #667eea; background: rgba(102,126,234,0.05); }
+        .radio-option input[type="radio"] { margin-right: 12px; width: 20px; height: 20px; cursor: pointer; }
+        .radio-option.selected { border-color: #667eea; background: rgba(102,126,234,0.1); }
+        .button-group { display: flex; gap: 15px; margin-top: 30px; }
+        button { padding: 14px 30px; border: none; border-radius: 8px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+        button i { margin-right: 8px; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; flex: 1; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #d0d0d0; }
+        .btn-success { background: #4caf50; color: white; }
+        .btn-success:hover:not(:disabled) { background: #45a049; }
+        .results { display: none; }
+        .results.active { display: block; animation: fadeIn 0.5s ease; }
+        .result-card { color: white; border-radius: 12px; padding: 30px; margin-bottom: 25px; text-align: center; }
+        .result-card h2 { font-size: 2em; margin-bottom: 10px; }
+        .result-card .trm-level { font-size: 3em; font-weight: 700; margin: 20px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        .result-details { background: #f8f9fa; border-radius: 12px; padding: 25px; margin-bottom: 20px; }
+        .result-details h3 { color: #667eea; margin-bottom: 15px; font-size: 1.3em; }
+        .result-details h3 i { margin-right: 8px; }
+        .result-details p { color: #555; line-height: 1.6; margin-bottom: 15px; }
+        .result-details ul { list-style: none; padding: 0; }
+        .result-details li { padding: 10px 0; border-bottom: 1px solid #e0e0e0; color: #555; }
+        .result-details li:last-child { border-bottom: none; }
+        .result-details li strong { color: #333; }
+        .recommendation-box { background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%); border-left: 4px solid #667eea; padding: 20px; margin: 15px 0; border-radius: 8px; }
+        .info-box { background: #e3f2fd; border-left: 4px solid #2196F3; padding: 15px; margin: 20px 0; border-radius: 8px; }
+        .info-box p { color: #1565c0; margin: 0; }
+        .info-box i { margin-right: 8px; }
+        .success-box { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; margin: 20px 0; border-radius: 8px; }
+        .success-box p { color: #2e7d32; margin: 0; }
+        .warning-box { background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin: 20px 0; border-radius: 8px; }
+        .warning-box p { color: #ef6c00; margin: 0; }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; margin-right: 10px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .score-icon { margin-right: 6px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fa-solid fa-bullseye"></i>TRM Assessment Tool</h1>
+            <p>Task-Relevant Maturity Assessment for Managers</p>
+        </div>
+        <div class="content">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <!-- Section 1: Basic Information -->
+            <div class="section active" id="section1">
+                <h2 style="margin-bottom: 25px; color: #333;">Basic Information</h2>
+                <div class="form-group">
+                    <label for="employeeName">Employee Name *</label>
+                    <input type="text" id="employeeName" placeholder="Enter employee name" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Role</label>
+                    <input type="text" id="role" placeholder="Enter role/title">
+                </div>
+                <div class="form-group">
+                    <label for="department">Department</label>
+                    <input type="text" id="department" placeholder="Enter department (optional)">
+                </div>
+                <div class="form-group">
+                    <label for="managerName">Your Name (Manager)</label>
+                    <input type="text" id="managerName" placeholder="Enter your name">
+                </div>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="goToSection(2)">Next <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Section 2: Task Selection -->
+            <div class="section" id="section2">
+                <h2 style="margin-bottom: 15px; color: #333;">Select Task Category</h2>
+                <p style="color: #666; margin-bottom: 25px;">Choose the type of task you're assessing. Remember: TRM is task-specific, not person-specific.</p>
+                <div class="task-categories">
+                    <div class="task-card" onclick="selectTask('client_deliverable', this)">
+                        <div class="icon"><i class="fa-solid fa-chart-bar"></i></div>
+                        <div class="title">Client Deliverable</div>
+                        <div class="subtitle">Reports, presentations, analysis</div>
+                    </div>
+                    <div class="task-card" onclick="selectTask('technical_skill', this)">
+                        <div class="icon"><i class="fa-solid fa-laptop-code"></i></div>
+                        <div class="title">Technical Skill</div>
+                        <div class="subtitle">Software, tools, methodologies</div>
+                    </div>
+                    <div class="task-card" onclick="selectTask('leadership', this)">
+                        <div class="icon"><i class="fa-solid fa-people-group"></i></div>
+                        <div class="title">Leadership/Team</div>
+                        <div class="subtitle">Coordination, mentoring, delegation</div>
+                    </div>
+                    <div class="task-card" onclick="selectTask('strategic', this)">
+                        <div class="icon"><i class="fa-solid fa-chess-knight"></i></div>
+                        <div class="title">Strategic Work</div>
+                        <div class="subtitle">Planning, decision-making, roadmaps</div>
+                    </div>
+                    <div class="task-card" onclick="selectTask('customer_communication', this)">
+                        <div class="icon"><i class="fa-solid fa-comments"></i></div>
+                        <div class="title">Customer Communication</div>
+                        <div class="subtitle">Updates, requirements, relationships</div>
+                    </div>
+                    <div class="task-card" onclick="selectTask('process_improvement', this)">
+                        <div class="icon"><i class="fa-solid fa-gears"></i></div>
+                        <div class="title">Process Improvement</div>
+                        <div class="subtitle">Optimization, efficiency, standards</div>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 25px;">
+                    <label for="taskDescription">Describe the specific task *</label>
+                    <input type="text" id="taskDescription" placeholder="e.g. 'Creating monthly client status reports' or 'Using Nuix for data extraction'">
+                </div>
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="goToSection(1)"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    <button class="btn-primary" onclick="goToSection(3)">Next <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Section 3: Questions -->
+            <div class="section" id="section3">
+                <h2 style="margin-bottom: 15px; color: #333;">Task-Relevant Maturity Assessment</h2>
+                <p style="color: #666; margin-bottom: 25px;">Answer these questions based on the employee's capability for <strong>this specific task</strong>.</p>
+
+                <div class="question-card">
+                    <h3>1. Experience: How many times has this person completed similar tasks?</h3>
+                    <div class="radio-group">
+                        <label class="radio-option"><input type="radio" name="q1" value="1"><span>Never or once — this is new territory for them</span></label>
+                        <label class="radio-option"><input type="radio" name="q1" value="2"><span>A few times (2-5) — starting to build familiarity</span></label>
+                        <label class="radio-option"><input type="radio" name="q1" value="3"><span>Many times (6-15) — regular but not yet routine</span></label>
+                        <label class="radio-option"><input type="radio" name="q1" value="4"><span>Extensively (15+) — this is routine work for them</span></label>
+                    </div>
+                </div>
+
+                <div class="question-card">
+                    <h3>2. Execution Quality: Rate their current execution quality for this task</h3>
+                    <div class="radio-group">
+                        <label class="radio-option"><input type="radio" name="q2" value="1"><span>Frequent errors requiring significant rework</span></label>
+                        <label class="radio-option"><input type="radio" name="q2" value="2"><span>Occasional errors that need correction in QC</span></label>
+                        <label class="radio-option"><input type="radio" name="q2" value="3"><span>Mostly solid work with minor issues</span></label>
+                        <label class="radio-option"><input type="radio" name="q2" value="4"><span>Consistently high quality with rare issues</span></label>
+                    </div>
+                </div>
+
+                <div class="question-card">
+                    <h3>3. Autonomy: How much guidance do they currently need?</h3>
+                    <div class="radio-group">
+                        <label class="radio-option"><input type="radio" name="q3" value="1"><span>Needs step-by-step instructions and frequent check-ins</span></label>
+                        <label class="radio-option"><input type="radio" name="q3" value="2"><span>Needs clear direction and periodic guidance</span></label>
+                        <label class="radio-option"><input type="radio" name="q3" value="3"><span>Needs minimal guidance, mostly coaching on edge cases</span></label>
+                        <label class="radio-option"><input type="radio" name="q3" value="4"><span>Fully autonomous — just needs clear objectives</span></label>
+                    </div>
+                </div>
+
+                <div class="question-card">
+                    <h3>4. Problem-Solving: When issues arise with this task, what happens?</h3>
+                    <div class="radio-group">
+                        <label class="radio-option"><input type="radio" name="q4" value="1"><span>Gets stuck and needs help identifying the problem</span></label>
+                        <label class="radio-option"><input type="radio" name="q4" value="2"><span>Identifies problems but needs help solving them</span></label>
+                        <label class="radio-option"><input type="radio" name="q4" value="3"><span>Solves most problems independently, escalates appropriately</span></label>
+                        <label class="radio-option"><input type="radio" name="q4" value="4"><span>Anticipates and prevents problems proactively</span></label>
+                    </div>
+                </div>
+
+                <div class="question-card">
+                    <h3>5. Understanding: Do they understand the "why" behind this task?</h3>
+                    <div class="radio-group">
+                        <label class="radio-option"><input type="radio" name="q5" value="1"><span>Focused on mechanics — unclear on purpose or impact</span></label>
+                        <label class="radio-option"><input type="radio" name="q5" value="2"><span>Basic understanding but missing broader context</span></label>
+                        <label class="radio-option"><input type="radio" name="q5" value="3"><span>Solid grasp of purpose and how it fits the bigger picture</span></label>
+                        <label class="radio-option"><input type="radio" name="q5" value="4"><span>Deep understanding — can explain value and adapt approach</span></label>
+                    </div>
+                </div>
+
+                <div class="question-card">
+                    <h3>6. Adaptability: How do they handle variations or new contexts for this task?</h3>
+                    <div class="radio-group">
+                        <label class="radio-option"><input type="radio" name="q6" value="1"><span>Struggles with any deviation from what they've learned</span></label>
+                        <label class="radio-option"><input type="radio" name="q6" value="2"><span>Can handle minor variations with guidance</span></label>
+                        <label class="radio-option"><input type="radio" name="q6" value="3"><span>Adapts well to most variations independently</span></label>
+                        <label class="radio-option"><input type="radio" name="q6" value="4"><span>Innovates and improves the approach for new contexts</span></label>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="goToSection(2)"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    <button class="btn-primary" onclick="calculateTRM()">Calculate TRM <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="results" id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentSection = 1;
+        let selectedTask = '';
+        let assessmentData = {};
+
+        const SP_SITE_URL = 'https://linealservices.sharepoint.com/sites/KnowledgeHoldingSite';
+        const SP_LIST_NAME = 'TRM Assessments';
+
+        function goToSection(n) {
+            if (n > currentSection) {
+                if (currentSection === 1) {
+                    if (!document.getElementById('employeeName').value.trim()) {
+                        alert('Please enter employee name'); return;
+                    }
+                    assessmentData.employeeName = document.getElementById('employeeName').value.trim();
+                    assessmentData.role = document.getElementById('role').value.trim();
+                    assessmentData.department = document.getElementById('department').value.trim();
+                    assessmentData.managerName = document.getElementById('managerName').value.trim();
+                }
+                if (currentSection === 2) {
+                    if (!selectedTask) { alert('Please select a task category'); return; }
+                    if (!document.getElementById('taskDescription').value.trim()) { alert('Please describe the specific task'); return; }
+                    assessmentData.taskDescription = document.getElementById('taskDescription').value.trim();
+                }
+            }
+            document.getElementById(`section${currentSection}`).classList.remove('active');
+            currentSection = n;
+            document.getElementById(`section${currentSection}`).classList.add('active');
+            document.getElementById('progressFill').style.width = `${(n / 3) * 100}%`;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function selectTask(taskType, el) {
+            document.querySelectorAll('.task-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedTask = taskType;
+            assessmentData.taskCategory = taskType;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.radio-option input[type="radio"]').forEach(r => {
+                r.addEventListener('change', function() {
+                    this.closest('.radio-group').querySelectorAll('.radio-option').forEach(o => o.classList.remove('selected'));
+                    this.closest('.radio-option').classList.add('selected');
+                });
+            });
+        });
+
+        function calculateTRM() {
+            const scores = [];
+            for (let i = 1; i <= 6; i++) {
+                const a = document.querySelector(`input[name="q${i}"]:checked`);
+                if (!a) { alert(`Please answer question ${i}`); return; }
+                scores.push(parseInt(a.value));
+            }
+            const avg = scores.reduce((a, b) => a + b, 0) / 6;
+            let trmLevel, trmColor, managementStyle, trmDescription;
+
+            if (avg <= 2.0) {
+                trmLevel = 'LOW'; trmColor = '#c62828';
+                managementStyle = 'Structured, Directive Management';
+                trmDescription = 'This employee lacks experience or understanding of this task. They need clear instructions, close supervision, and frequent feedback.';
+            } else if (avg <= 3.0) {
+                trmLevel = 'MEDIUM'; trmColor = '#ef6c00';
+                managementStyle = 'Supportive, Communicative Management';
+                trmDescription = 'This employee has some experience and can contribute to problem-solving. They need two-way communication, emotional support, and collaborative guidance.';
+            } else {
+                trmLevel = 'HIGH'; trmColor = '#2e7d32';
+                managementStyle = 'Delegative, Monitoring Management';
+                trmDescription = 'This employee is highly capable and self-directed. They need minimal involvement with focus on setting objectives and monitoring progress.';
+            }
+
+            const payload = {
+                timestamp: new Date().toISOString(),
+                employeeName: assessmentData.employeeName,
+                role: assessmentData.role,
+                department: assessmentData.department,
+                managerName: assessmentData.managerName,
+                taskCategory: assessmentData.taskCategory,
+                taskDescription: assessmentData.taskDescription,
+                trmLevel: trmLevel,
+                avgScore: parseFloat(avg.toFixed(2)),
+                q1Score: scores[0], q2Score: scores[1], q3Score: scores[2],
+                q4Score: scores[3], q5Score: scores[4], q6Score: scores[5]
+            };
+
+            displayResults(trmLevel, trmColor, managementStyle, trmDescription, avg, scores, payload);
+        }
+
+        async function getDigestToken() {
+            // In ASPX context, SharePoint injects the digest token directly into the page
+            const injected = document.getElementById('__REQUESTDIGEST');
+            if (injected && injected.value) return injected.value;
+
+            // Fallback: request token via API (works when served as raw HTML)
+            const response = await fetch(`${SP_SITE_URL}/_api/contextinfo`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json;odata=verbose' },
+                credentials: 'include'
+            });
+            const data = await response.json();
+            return data.d.GetContextWebInformation.FormDigestValue;
+        }
+
+        async function saveToMicrosoft(payload) {
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span>Saving...';
+
+            try {
+                const digestToken = await getDigestToken();
+
+                const spPayload = {
+                    '__metadata': { 'type': 'SP.Data.TRM_x0020_AssessmentsListItem' },
+                    'Title': payload.employeeName,
+                    'EmployeeID': payload.employeeName,
+                    'Role': payload.role,
+                    'Department': payload.department,
+                    'ManagersName': payload.managerName,
+                    'TaskCategory': payload.taskCategory,
+                    'TaskDescription': payload.taskDescription,
+                    'TRMLevel': payload.trmLevel,
+                    'AvgScore': payload.avgScore,
+                    'Q1Score': payload.q1Score,
+                    'Q2Score': payload.q2Score,
+                    'Q3Score': payload.q3Score,
+                    'Q4Score': payload.q4Score,
+                    'Q5Score': payload.q5Score,
+                    'Q6Score': payload.q6Score
+                };
+
+                const response = await fetch(
+                    `${SP_SITE_URL}/_api/web/lists/getbytitle('${SP_LIST_NAME}')/items`,
+                    {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Accept': 'application/json;odata=verbose',
+                            'Content-Type': 'application/json;odata=verbose',
+                            'X-RequestDigest': digestToken
+                        },
+                        body: JSON.stringify(spPayload)
+                    }
+                );
+
+                if (response.ok) {
+                    document.getElementById('saveStatus').innerHTML = `<div class="success-box"><p><i class="fa-solid fa-circle-check"></i> <strong>Assessment saved successfully to SharePoint.</strong></p></div>`;
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved';
+                } else {
+                    const err = await response.json();
+                    throw new Error(err.error?.message?.value || 'Unknown error');
+                }
+            } catch (err) {
+                console.error('SharePoint save error:', err);
+                document.getElementById('saveStatus').innerHTML = `<div class="warning-box"><p><i class="fa-solid fa-triangle-exclamation"></i> <strong>Could not save.</strong> ${err.message || 'Please check your network connection or contact your administrator.'}</p></div>`;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save to Microsoft';
+            }
+        }
+
+        function displayResults(trmLevel, trmColor, managementStyle, trmDescription, avg, scores, payload) {
+            const categoryNames = {
+                client_deliverable: 'Client Deliverable', technical_skill: 'Technical Skill',
+                leadership: 'Leadership/Team', strategic: 'Strategic Work',
+                customer_communication: 'Customer Communication', process_improvement: 'Process Improvement'
+            };
+            const scoreLabels = {
+                1: '<i class="fa-solid fa-triangle-exclamation score-icon"></i>Needs Significant Development',
+                2: '<i class="fa-solid fa-chart-line score-icon"></i>Developing',
+                3: '<i class="fa-solid fa-circle-check score-icon"></i>Competent',
+                4: '<i class="fa-solid fa-star score-icon"></i>Highly Proficient'
+            };
+            const dimensions = ['Experience', 'Execution Quality', 'Autonomy', 'Problem-Solving', 'Understanding', 'Adaptability'];
+
+            const actions = trmLevel === 'LOW'
+                ? `<ul style="list-style:none;padding:0">
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i><strong>Tell</strong> them what to do, when, and how</li>
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i>Provide clear step-by-step instructions</li>
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i>Monitor progress with frequent check-ins</li>
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i>Give immediate, specific feedback</li>
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i>Be patient — this is a learning phase</li>
+                   </ul>`
+                : trmLevel === 'MEDIUM'
+                ? `<ul style="list-style:none;padding:0">
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i><strong>Engage</strong> in two-way communication</li>
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i>Ask questions to help them think through challenges</li>
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i>Provide emotional support and encouragement</li>
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i>Co-develop solutions rather than dictating</li>
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i>Focus on building confidence and problem-solving skills</li>
+                   </ul>`
+                : `<ul style="list-style:none;padding:0">
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i><strong>Delegate</strong> with clear objectives and timelines</li>
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i>Give autonomy to determine the "how"</li>
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i>Monitor to avoid surprises, not to micromanage</li>
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i>Focus on outcomes, not process</li>
+                    <li><i class="fa-solid fa-check" style="margin-right:8px;color:#667eea"></i>Trust their judgment and give them ownership</li>
+                   </ul>`;
+
+            document.getElementById('results').innerHTML = `
+                <div class="result-card" style="background:${trmColor}">
+                    <h2>Assessment Complete</h2>
+                    <div class="trm-level">${trmLevel} TRM</div>
+                    <p style="font-size:1.1em">Score: ${avg.toFixed(1)} / 4.0</p>
+                </div>
+
+                <div id="saveStatus"></div>
+
+                <div class="result-details">
+                    <h3><i class="fa-solid fa-clipboard-list"></i>Assessment Summary</h3>
+                    <ul>
+                        <li><strong>Employee:</strong> ${assessmentData.employeeName}</li>
+                        <li><strong>Role:</strong> ${assessmentData.role || 'Not specified'}</li>
+                        ${assessmentData.department ? `<li><strong>Department:</strong> ${assessmentData.department}</li>` : ''}
+                        <li><strong>Task Category:</strong> ${categoryNames[assessmentData.taskCategory]}</li>
+                        <li><strong>Specific Task:</strong> ${assessmentData.taskDescription}</li>
+                        <li><strong>Assessed by:</strong> ${assessmentData.managerName || 'Not specified'}</li>
+                        <li><strong>Date:</strong> ${new Date().toLocaleDateString()}</li>
+                    </ul>
+                </div>
+
+                <div class="result-details">
+                    <h3><i class="fa-solid fa-bullseye"></i>Recommended Management Style</h3>
+                    <h4 style="color:${trmColor};font-size:1.3em;margin:15px 0">${managementStyle}</h4>
+                    <p>${trmDescription}</p>
+                    <div class="recommendation-box">
+                        <h4 style="margin-bottom:10px;color:#333">What This Means for You:</h4>
+                        ${actions}
+                    </div>
+                </div>
+
+                <div class="result-details">
+                    <h3><i class="fa-solid fa-chart-bar"></i>Detailed Score Breakdown</h3>
+                    <ul>
+                        ${dimensions.map((d, i) => `<li><strong>${d}:</strong> ${scoreLabels[scores[i]]}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <div class="info-box">
+                    <p><i class="fa-solid fa-circle-info"></i> <strong>Remember:</strong> TRM is task-specific and dynamic. As ${assessmentData.employeeName} gains experience with this task, their TRM level will increase. Reassess regularly and celebrate progress!</p>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-success" id="saveBtn" onclick="saveToMicrosoft(${JSON.stringify(payload).replace(/"/g, '&quot;')})">
+                        <i class="fa-solid fa-floppy-disk"></i> Save to Microsoft
+                    </button>
+                    <button class="btn-secondary" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i> Print / Save PDF
+                    </button>
+                    <button class="btn-secondary" onclick="location.reload()">
+                        <i class="fa-solid fa-rotate"></i> New Assessment
+                    </button>
+                </div>
+            `;
+
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('results').classList.add('active');
+            document.getElementById('progressFill').style.width = '100%';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
